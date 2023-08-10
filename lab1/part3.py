@@ -1,5 +1,4 @@
 import torch
-import numpy as np
 import matplotlib.pyplot as plt
 
 print("PyTorch Version:", torch.__version__)
