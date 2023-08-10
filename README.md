@@ -1,1 +1,1 @@
-# comp3710
+# COMP3710 - course work
