@@ -7,13 +7,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Device:", device)
 
 # Part 2
-zoom_rate = 0
-offset = 0, 0
+zoom_rate = 300
+offset = 0.02, 0.3 # y, x
 set0 = -1.3, 1.3, -2, 1, 0.005
-set1 = -0.65, 0.65, -1, 0.5, 0.0025
-# set2 = -0.4, 0.2, -0.5, 0.2, 0.004
-set_julia = -2,2,-2,2,0.001
-ymn, ymx, xmn, xmx, spc = set_julia
+set1 = -1.3/zoom_rate+offset[0], 1.3/zoom_rate+offset[0], -2/zoom_rate+offset[1], 1/zoom_rate+offset[1], 0.005/zoom_rate
+setj = -2,2,-2,2,0.001
+ymn, ymx, xmn, xmx, spc = setj
 Y, X = np.mgrid[ymn:ymx:spc, xmn:xmx:spc]
 x = torch.Tensor(X)
 y = torch.Tensor(Y)
@@ -27,9 +26,9 @@ ns = ns.to(device)
 
 for i in range(64): 
     # Mandelbrot Set: new z = z^2+z
-    zs_ = zs*zs + z
+    # zs_ = zs*zs + z
     # Julia Set: new z = z^2+c
-    # zs_ = zs*zs + (-0.54+0.54j)
+    zs_ = zs*zs + (-0.54+0.54j)
     not_diverged = torch.abs(zs_) < 4.0
     ns += not_diverged.type(torch.FloatTensor) 
     zs = zs_
