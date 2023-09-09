@@ -1,0 +1,46 @@
+Epoch [1/20], Loss: 1.0642
+Accuracy on the 5000 validation images: 60.46 %
+Epoch [2/20], Loss: 0.8124
+Accuracy on the 5000 validation images: 71.24 %
+Epoch [3/20], Loss: 0.6099
+Accuracy on the 5000 validation images: 76.46 %
+Epoch [4/20], Loss: 0.4636
+Accuracy on the 5000 validation images: 79.94 %
+Epoch [5/20], Loss: 0.3712
+Accuracy on the 5000 validation images: 79.18 %
+Epoch [6/20], Loss: 0.2830
+Accuracy on the 5000 validation images: 80.78 %
+Epoch [7/20], Loss: 0.2650
+Accuracy on the 5000 validation images: 81.04 %
+Epoch [8/20], Loss: 0.1291
+Accuracy on the 5000 validation images: 81.16 %
+Epoch [9/20], Loss: 0.0508
+Accuracy on the 5000 validation images: 81.84 %
+Epoch [10/20], Loss: 0.0471
+Accuracy on the 5000 validation images: 81.8 %
+Epoch [11/20], Loss: 0.0083
+Accuracy on the 5000 validation images: 83.54 %
+Epoch [12/20], Loss: 0.0036
+Accuracy on the 5000 validation images: 84.34 %
+Epoch [13/20], Loss: 0.0015
+Accuracy on the 5000 validation images: 85.04 %
+Epoch [14/20], Loss: 0.0013
+Accuracy on the 5000 validation images: 85.6 %
+Epoch [15/20], Loss: 0.0018
+Accuracy on the 5000 validation images: 85.46 %
+Epoch [16/20], Loss: 0.0010
+Accuracy on the 5000 validation images: 85.38 %
+Epoch [17/20], Loss: 0.0012
+Accuracy on the 5000 validation images: 85.5 %
+Epoch [18/20], Loss: 0.0018
+Accuracy on the 5000 validation images: 85.24 %
+Epoch [19/20], Loss: 0.0014
+Accuracy on the 5000 validation images: 85.5 %
+Epoch [20/20], Loss: 0.0013
+Accuracy on the 5000 validation images: 85.34 %
+Finished Training
+Training Time: 27.18 min
+Start Testing
+Testing Time: 0.19 min
+Accuracy on the 10000 test images: 84.49 %
+Execution Time: 27.40 min

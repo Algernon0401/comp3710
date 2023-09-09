@@ -1,0 +1,51 @@
+Program Starts
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+Start Training
+Epoch [1/20], Loss: 1.0118
+Accuracy on the 5000 validation images: 60.92 %
+Epoch [2/20], Loss: 0.8561
+Accuracy on the 5000 validation images: 70.82 %
+Epoch [3/20], Loss: 0.5595
+Accuracy on the 5000 validation images: 77.52 %
+Epoch [4/20], Loss: 0.5147
+Accuracy on the 5000 validation images: 78.7 %
+Epoch [5/20], Loss: 0.4650
+Accuracy on the 5000 validation images: 81.0 %
+Epoch [6/20], Loss: 0.3434
+Accuracy on the 5000 validation images: 81.14 %
+Epoch [7/20], Loss: 0.3952
+Accuracy on the 5000 validation images: 83.14 %
+Epoch [8/20], Loss: 0.1865
+Accuracy on the 5000 validation images: 80.98 %
+Epoch [9/20], Loss: 0.1135
+Accuracy on the 5000 validation images: 82.24 %
+Epoch [10/20], Loss: 0.0472
+Accuracy on the 5000 validation images: 82.46 %
+Epoch [11/20], Loss: 0.0442
+Accuracy on the 5000 validation images: 82.6 %
+Epoch [12/20], Loss: 0.0379
+Accuracy on the 5000 validation images: 83.18 %
+Epoch [13/20], Loss: 0.0136
+Accuracy on the 5000 validation images: 84.46 %
+Epoch [14/20], Loss: 0.0043
+Accuracy on the 5000 validation images: 85.7 %
+Epoch [15/20], Loss: 0.0015
+Accuracy on the 5000 validation images: 86.36 %
+Epoch [16/20], Loss: 0.0016
+Accuracy on the 5000 validation images: 86.12 %
+Epoch [17/20], Loss: 0.0023
+Accuracy on the 5000 validation images: 86.2 %
+Epoch [18/20], Loss: 0.0024
+Accuracy on the 5000 validation images: 86.4 %
+Epoch [19/20], Loss: 0.0021
+Accuracy on the 5000 validation images: 86.28 %
+Epoch [20/20], Loss: 0.0026
+Accuracy on the 5000 validation images: 86.38 %
+Finished Training
+Training Time: 29.66 min
+Start Testing
+Testing Time: 0.20 min
+Accuracy on the 10000 test images: 86.19 %
+Execution Time: 29.93 min

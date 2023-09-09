@@ -1,11 +1,14 @@
+import time
 import numpy as np
 import torch
-import torchvision.datasets as datasets
-import torchvision.transforms as transforms
-import torch.nn as nn
+from torchvision import datasets
+from torchvision import transforms
+from torch import nn
 import torch.nn.functional as F
 from torch.utils.data.sampler import SubsetRandomSampler
 import gc
+from torch import autocast
+from torch.cuda.amp import GradScaler
 
 # IO Paths
 DATA_PATH = './data'
@@ -52,16 +55,6 @@ class DeeperNet(nn.Module):
         x = self.fc3(x)
         return x
     
-# lecture 31 Aug
-# class BasicBlock(nn.Module):
-#     expansion = 1
-
-#     def __init__(self, in_planes, planes, stride=1):
-#         super(BasicBlock, self).__init__()
-#         self.conv1 = nn.Conv2d(
-#             in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
-#         self.bn1 =
-
 # https://blog.paperspace.com/writing-resnet-from-scratch-in-pytorch/
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride = 1, downsample = None):
@@ -135,7 +128,7 @@ class ResNet(nn.Module):
         return x
 
 def load_data(data_dir='./data',
-                batch_size=128,
+                batch_size=256,
                 random_seed=42,
                 valid_size=0.1,
                 shuffle=True,
@@ -198,23 +191,26 @@ def load_data(data_dir='./data',
 
         return (train_loader, valid_loader)
 
-def train(model, criterion, optimizer,trainloader, validloader, n_epochs, device):
+def train(model, criterion, optimizer, trainloader, validloader, n_epochs, device:torch.device):
     # f_print = 1
     print("Start Training")
+    scaler = GradScaler()
     for epoch in range(n_epochs):
         # running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             # move tensors to device
             inputs, labels = data[0].to(device), data[1].to(device)
 
-            # forward pass
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+            # forward pass (with autocasting)
+            with autocast(device_type=device.type, dtype=torch.float16):
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
 
             # backward & optimize
             optimizer.zero_grad() # zero the parameter gradients
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward() # loss.backward()
+            scaler.step(optimizer) # optimizer.step()
+            scaler.update()
 
             # clean
             del inputs, labels, outputs
@@ -269,14 +265,15 @@ def test(model, testloader, device):
         return accuracy
 
 def main():
-    print("Program start.")
+    start_time = time.time()
+    print("Program Starts")
     # Device Config
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     if not torch.cuda.is_available():
         print("Warning: CUDA not Found. Using CPU.")
 
     # Hyper-Params
-    n_epochs = 8
+    n_epochs = 20
     learning_rate = 0.01
     # batch_size = 16
     # n_classes = 10
@@ -291,13 +288,18 @@ def main():
     model.to(device)
     criterion = nn.CrossEntropyLoss() # loss_func
     # optimizer = torch.optim.Adam(net.parameters())
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay = 0.001, momentum = 0.9)  
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay = 0.001, momentum = 0.9)
 
+    train_start_time = time.time()
     model = train(model, criterion, optimizer, trainloader, validloader, n_epochs, device)
+    print("Training Time: %.2f min" % ((time.time() - train_start_time) / 60))
     torch.save(model.state_dict(), MODEL_PATH)
 
+    test_start_time = time.time()
     accuracy = test(model, testloader, device)
+    print("Testing Time: %.2f min" % ((time.time() - test_start_time) / 60))
     print('Accuracy on the {} test images: {} %'.format(10000, 100 * accuracy))
+    print("Execution Time: %.2f min" % ((time.time() - start_time) / 60))
 
 
 if __name__ == "__main__":
