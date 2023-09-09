@@ -7,7 +7,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Device:", device)
 
 # Part 2
-zoom_rate = 300
+zoom_rate = 50
 offset = 0.02, 0.3 # y, x
 set0 = -1.3, 1.3, -2, 1, 0.005
 set1 = -1.3/zoom_rate+offset[0], 1.3/zoom_rate+offset[0], -2/zoom_rate+offset[1], 1/zoom_rate+offset[1], 0.005/zoom_rate

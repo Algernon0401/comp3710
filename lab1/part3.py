@@ -20,7 +20,7 @@ def vicsek_fractal(iterations):
     return fractal
 
 # Generating the fractal
-fractal = vicsek_fractal(5)
+fractal = vicsek_fractal(2)
 
 # Displaying the fractal
 # print(fractal)
