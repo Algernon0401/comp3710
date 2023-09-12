@@ -251,7 +251,7 @@ def main():
 
     # Data
     print("Loading Data...")
-    trainloader, validloader = load_data(test=False)
+    # trainloader, validloader = load_data(test=False)
     testloader = load_data(batch_size=1,test=True)
     
     # Model, Loss, Optmizer
@@ -260,15 +260,17 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=LR_RATE)
 
     # Train
-    train_start_time = time.time()
-    model = train(trainloader, NUM_EPOCHS, model, optimizer, criterion)
-    print("Training Time: %.2f min" % ((time.time() - train_start_time) / 60))
-    torch.save(model.state_dict(), MODEL_PATH)
+    # train_start_time = time.time()
+    # model = train(trainloader, NUM_EPOCHS, model, optimizer, criterion)
+    # print("Training Time: %.2f min" % ((time.time() - train_start_time) / 60))
+    # torch.save(model.state_dict(), MODEL_PATH)
 
     # Test
-    # model.load_state_dict(torch.load(MODEL_PATH))
-    # model.eval()
+    model.load_state_dict(torch.load(MODEL_PATH))
+    model.eval()
     inference(model, testloader, 1, num_examples=10)
+    # fixed_noise_vector = torch.FloatTensor(64, Z_DIM).normal_(0., 1.).to(device)
+    # visualize(model, fixed_noise_vector)
     print("Execution Time: %.2f min" % ((time.time() - start_time) / 60))
 
 def show_img():
@@ -282,6 +284,38 @@ def show_img():
             imgs = np.transpose(imgs,(1,2,0))
             plt.imshow(imgs)
             plt.show()
+
+def visualize(model, noise:torch.Tensor):
+    n_images = noise.size(0)
+    
+    rows = int(np.sqrt(n_images))
+    cols = rows
+    
+    grid = np.zeros((rows*28, cols*28), dtype=np.uint8)
+    
+    with torch.no_grad():
+        _x = model.decode(noise)
+        
+    images = _x.cpu().numpy()
+    
+    ptr = 0
+    for i in range(rows):
+        _row = i * 28
+        for j in range(cols):
+            _col = j * 28
+            img = images[ptr]
+            print(img.shape)
+            if img.shape[0] == 1:
+                img = np.squeeze(img, axis=0)
+            else:
+                img = np.transpose(img, axes=(1, 2, 0))
+            img = (img * 255.).astype(np.uint8)
+            grid[_row:_row+28, _col:_col+28] = img
+            ptr += 1
+            
+    cmap = 'gray' if np.ndim(img) == 2 else None
+    plt.imshow(grid, cmap=cmap)
+    plt.show()
 
 if __name__ == "__main__":
     main()
