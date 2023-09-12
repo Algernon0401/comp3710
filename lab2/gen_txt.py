@@ -13,12 +13,12 @@ VALID_TXT = './oasis_valid.txt'
 TEST_TXT = './oasis_test.txt'
 SEG_PREFIX = 'seg'
 
-# path = TRAIN_INPUT_PATH
-# txt_path = DATA_PATH + TRAIN_TXT
+path = TRAIN_INPUT_PATH
+txt_path = DATA_PATH + TRAIN_TXT
 # path = VALID_INPUT_PATH
 # txt_path = DATA_PATH + VALID_TXT
-path = TEST_INPUT_PATH
-txt_path = DATA_PATH + TEST_TXT
+# path = TEST_INPUT_PATH
+# txt_path = DATA_PATH + TEST_TXT
 
 file_list = []
 filelist = os.listdir(path) # all files (and folders) in this dir
