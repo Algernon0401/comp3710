@@ -13,26 +13,31 @@ VALID_TXT = './oasis_valid.txt'
 TEST_TXT = './oasis_test.txt'
 SEG_PREFIX = 'seg'
 
-path = VALID_INPUT_PATH
-txt_path = DATA_PATH + VALID_TXT
+# path = TRAIN_INPUT_PATH
+# txt_path = DATA_PATH + TRAIN_TXT
+# path = VALID_INPUT_PATH
+# txt_path = DATA_PATH + VALID_TXT
+path = TEST_INPUT_PATH
+txt_path = DATA_PATH + TEST_TXT
 
 file_list = []
-filelist = os.listdir(path) #该文件夹下所有的文件（包括文件夹）
+filelist = os.listdir(path) # all files (and folders) in this dir
 count=0
-write_file = open(txt_path, "w") #以只写方式打开write_file_name文件
+write_file = open(txt_path, "w") # open file (readonly)
 
-for file in os.listdir(path):   #遍历所有文件
-    filename=os.path.splitext(file)[0]  #文件名
-    filename_no_pre = os.path.splitext(file)[0][4:]
-    filetype = os.path.splitext(file)[1]   #文件扩展名
-    new_pair = os.path.join(filename + filetype + ' ' + SEG_PREFIX + filename_no_pre + filetype)
+for file in os.listdir(path):   # iterate through all files
+    filename=os.path.splitext(file)[0]  # filename (without .png)
+    # filename_no_pre = os.path.splitext(file)[0][4:]
+    idx = os.path.splitext(file)[0][15:len(os.path.splitext(file)[0])-4]
+    filetype = os.path.splitext(file)[1]   # .png
+    # new_pair = os.path.join(filename + filetype + ' ' + SEG_PREFIX + filename_no_pre + filetype)
+    new_pair = os.path.join(filename + filetype + ' ' + idx)
     file_list.append(new_pair)
     count+=1
 
-number_of_lines = len(file_list)#列表中元素个数
+number_of_lines = len(file_list) # number of elements in list
 print('file_list1:',file_list)
-file_list.sort(key=lambda item:len(str(item)), reverse=False)#排序
+file_list.sort(key=lambda item:len(str(item)), reverse=False) # sorting
 print('file_list:',file_list)
-print(type(file_list))
 for current_line in range(number_of_lines):
-    write_file.write(file_list[current_line] + '\n')  # 关闭文件
+    write_file.write(file_list[current_line] + '\n')  # close file

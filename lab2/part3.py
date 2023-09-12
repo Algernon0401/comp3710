@@ -6,7 +6,6 @@ import torchvision
 from torchvision import transforms
 from torchvision.utils import save_image
 from tqdm import tqdm
-import torchvision.datasets as datasets  
 from torch.utils.data import DataLoader, Dataset
 import time
 import numpy as np
@@ -30,12 +29,12 @@ TEST_TXT = './oasis_test.txt'       # info of img for test
 
 # Configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-INPUT_DIM = 784     # dimension of input
-Z_DIM = 20          # dimension of z
-H_DIM = 200         # dimension of h
-NUM_EPOCHS = 10
-BATCH_SIZE = 32
-LR_RATE = 3e-4
+INPUT_DIM = 256*256 # dimension of Input
+Z_DIM = 20          # dimension of Latent Space
+H_DIM = 200         # dimension of Hidden Layer
+NUM_EPOCHS = 10     # number of epoch
+BATCH_SIZE = 32     # batch size
+LR_RATE = 3e-4      # learning rate
 
 class DataType(Enum):
     """
@@ -59,42 +58,47 @@ class OASIS_MRI(Dataset):
         if self.type == DataType.TRAIN:     # get training data
             file_annotation = root + TRAIN_TXT
             self.input_folder = TRAIN_INPUT_PATH
-            self.target_folder = TRAIN_TARGET_PATH
+            # self.target_folder = TRAIN_TARGET_PATH
         elif self.type == DataType.VALID:   # get validating data
             file_annotation = root + VALID_TXT
             self.input_folder = VALID_INPUT_PATH
-            self.target_folder = VALID_TARGET_PATH
+            # self.target_folder = VALID_TARGET_PATH
         elif self.type == DataType.TEST:    # get testing data
             file_annotation = root + TEST_TXT
             self.input_folder = TEST_INPUT_PATH
-            self.target_folder = TEST_TARGET_PATH
+            # self.target_folder = TEST_TARGET_PATH
 
         f = open(file_annotation, 'r') # open file in read only
         data_dict = f.readlines() # get all lines from file
         f.close() # close file
 
-        self.input_filenames = []
-        self.target_filenames = []
+        self.inputs = []
+        # self.target_filenames = []
+        self.labels = []
         for line in data_dict:
             img_names = line.split() # slipt by ' ', [0]: input, [1]: target
-            # input_img = Image.open(self.input_folder + img_names[0])    # read input img
+            input = Image.open(self.input_folder + img_names[0])    # read input img
             # target_img = Image.open(self.target_folder + img_names[1])  # read target img
+            if self.transform:
+                input = self.transform(input)
             # input_img = np.array(input_img.convert('L'))/255    # convert to 8-bit grayscale & normalize
             # target_img = np.array(target_img.convert('L'))/255  # convert to 8-bit grayscale & normalize
-            self.input_filenames.append(img_names[0])
-            self.target_filenames.append(img_names[1])
+            self.inputs.append(input)
+            # self.target_filenames.append(img_names[1])
+            self.labels.append(img_names[1])
         # self.input_filenames = np.array(self.input_filenames)   # convert to np array
         # self.target_filenames = np.array(self.target_filenames) # convert to np array
 
     def __getitem__(self, index):
-        input_img_path = self.input_folder + self.input_filenames[index]
-        target_img_path = self.target_folder + self.target_filenames[index]
-        input_img = self.transform(Image.open(input_img_path))
-        target_img = self.transform(Image.open(target_img_path))
-        return input_img, target_img
+        input = self.inputs[index]
+        # target_img_path = self.target_folder + self.target_filenames[index]
+        # target_img = Image.open(target_img_path)
+        label = int(self.labels[index])
+            # target_img = self.transform(target_img)
+        return input, label
     
     def __len__(self):
-        return len(self.input_filenames)
+        return len(self.inputs)
 
 class VariationalAutoEncoder(nn.Module):
     def __init__(self, input_dim, z_dim, h_dim=200):
@@ -133,18 +137,19 @@ class VariationalAutoEncoder(nn.Module):
         x = self.decode(z_reparametrized)
         return x, mu, sigma
 
-def train(train_loader, num_epochs, model, optimizer, criterion):
+def train(trainloader, n_epochs, model, optimizer, criterion):
     # Start training
-    for epoch in range(num_epochs):
-        loop = tqdm(enumerate(train_loader))
+    for epoch in range(n_epochs):
+        loop = tqdm(enumerate(trainloader))
         for i, (x, y) in loop:
             # Forward pass
             x = x.to(device).view(-1, INPUT_DIM)
+            # y = y.to(device).view(-1, INPUT_DIM)
             x_reconst, mu, sigma = model(x)
 
-            # loss, formulas from https://www.youtube.com/watch?v=igP03FXZqgo&t=2182s
-            reconst_loss = criterion(x_reconst, x)
-            kl_div = - torch.sum(1 + torch.log(sigma.pow(2)) - mu.pow(2) - sigma.pow(2))
+            # loss, formulas
+            reconst_loss = criterion(x_reconst, x)                                          # Reconstruction Loss
+            kl_div = - torch.sum(1 + torch.log(sigma.pow(2)) - mu.pow(2) - sigma.pow(2))    # Kullback-Leibler Divergence
 
             # Backprop and optimize
             loss = reconst_loss + kl_div
@@ -152,27 +157,12 @@ def train(train_loader, num_epochs, model, optimizer, criterion):
             loss.backward()
             optimizer.step()
             loop.set_postfix(loss=loss.item())
+        print ('Epoch [{}/{}], Loss: {:.4f}' 
+                    .format(epoch+1, n_epochs, loss.item()))
 
-def test(testloader, model):
-    print("Start Testing")
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        for data in testloader:
-            # move tensors to device
-            inputs, labels = data[0].to(device), data[1].to(device)
-            # calculate outputs by running images through the network
-            outputs = model(inputs)
-            # the class with the highest energy is what we choose as prediction
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-            del inputs, labels, outputs
+    return model
 
-        accuracy = correct / total
-        return accuracy
-
-def inference(model, dataset, digit, num_examples=1):
+def inference(model, dataloader, digit, num_examples=1):
     """
     Generates (num_examples) of a particular digit.
     Specifically we extract an example of each digit,
@@ -182,28 +172,19 @@ def inference(model, dataset, digit, num_examples=1):
     After we sample we can run the decoder part of the VAE
     and generate examples.
     """
-    images = []
-    idx = 0
-    for x, y in dataset:
-        if y == idx:
-            images.append(x)
-            idx += 1
-        if idx == 10:
-            break
+    print("Generating...")
+    for i, data in enumerate(dataloader):
+        input, label = data[0][0].to(device), data[1][0].to(device)
+        if label == digit:
+            image = input
 
-    encodings_digit = []
-    for d in range(10):
-        with torch.no_grad():
-            mu, sigma = model.encode(images[d].view(1, 784))
-        encodings_digit.append((mu, sigma))
+    with torch.no_grad():
+        mu, sigma = model.encode(image.view(1, 256*256))
 
-    mu, sigma = encodings_digit[digit]
     for example in range(num_examples):
-        epsilon = torch.randn_like(sigma)
-        z = mu + sigma * epsilon
-        out = model.decode(z)
-        out = out.view(-1, 1, 28, 28)
-        save_image(out, f"generated_{digit}_ex{example}.png")
+        z = mu + sigma * torch.randn_like(sigma) # mu + sigma + epsilon
+        out = model.decode(z).view(-1, 1, 256, 256)
+        save_image(out, f"./gened_imgs/generated_{digit}_ex{example}.png")
 
 def load_data(data_dir='./data',
                 batch_size=256,
@@ -213,13 +194,13 @@ def load_data(data_dir='./data',
                 test=False):
   
     normalize = transforms.Normalize(
-        mean=[0.4914, 0.4822, 0.4465],
-        std=[0.2023, 0.1994, 0.2010],
+        mean=[0.5],
+        std=[0.2],
     )
 
     # define transforms
     transform = transforms.Compose([
-            transforms.Resize((224,224)),
+            # transforms.Resize((224,224)),
             transforms.ToTensor(),
             normalize,
     ])
@@ -272,34 +253,36 @@ def load_data(data_dir='./data',
 def main():
     start_time = time.time()
     print("Program Starts")
-    print("Device: ", device)
+    print("Device:", device)
 
     # Data
+    print("Loading Data...")
     trainloader, validloader = load_data(test=False)
-    testloader = load_data(test=True)
+    testloader = load_data(batch_size=1,test=True)
     
     # Model, Loss, Optmizer
     model = VariationalAutoEncoder(INPUT_DIM, Z_DIM).to(device)
     criterion = nn.BCELoss(reduction="sum") # loss_func
     optimizer = torch.optim.Adam(model.parameters(), lr=LR_RATE)
 
+    # Train
     train_start_time = time.time()
     model = train(trainloader, NUM_EPOCHS, model, optimizer, criterion)
     print("Training Time: %.2f min" % ((time.time() - train_start_time) / 60))
     torch.save(model.state_dict(), MODEL_PATH)
 
-    test_start_time = time.time()
-    accuracy = test(model, testloader, device)
-    print("Testing Time: %.2f min" % ((time.time() - test_start_time) / 60))
-    print('Accuracy on the {} test images: {} %'.format(10000, 100 * accuracy))
+    # Test
+    # model.load_state_dict(torch.load(MODEL_PATH))
+    # model.eval()
+    inference(model, testloader, 1, num_examples=2)
     print("Execution Time: %.2f min" % ((time.time() - start_time) / 60))
 
 def show_img():
     train_dataset = OASIS_MRI(DATA_PATH,type=DataType.TRAIN,transform=transforms.ToTensor())
-    test_dataset = OASIS_MRI(DATA_PATH,type=DataType.TEST,transform=transforms.ToTensor())
+    # test_dataset = OASIS_MRI(DATA_PATH,type=DataType.TEST,transform=transforms.ToTensor())
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=6, shuffle=True)
+    # test_loader = DataLoader(dataset=test_dataset, batch_size=6, shuffle=True)
 
     for step ,(b_x,b_y) in enumerate(train_loader):
         if step < 3:
@@ -309,5 +292,5 @@ def show_img():
             plt.show()
 
 if __name__ == "__main__":
-    show_img()
+    main()
 
